@@ -73,6 +73,22 @@
 				reg = <0x0 0x50>;
 			};
 		};
+ 
+		pwm0: pwm@20030000 {
+			clocks = <&cru PCLK_PWM01>;
+		};
+
+		pwm1: pwm@20030010 {
+			clocks = <&cru PCLK_PWM01>;
+		};
+
+		pwm2: pwm@20050020 {
+			clocks = <&cru PCLK_PWM23>;
+		};
+
+		pwm3: pwm@20050030 {
+			clocks = <&cru PCLK_PWM23>;
+		};
 
 		cru: cru@20000000 {
 			compatible = "rockchip,rk3188-cru";
@@ -268,6 +284,30 @@
 							<RK_GPIO3 18 RK_FUNC_1 &pcfg_pull_none>,
 							<RK_GPIO3 19 RK_FUNC_1 &pcfg_pull_none>,
 							<RK_GPIO3 20 RK_FUNC_1 &pcfg_pull_none>;
+				};
+			};
+
+			pwm0 {
+				pwm0_pins: pwm0-pins {
+					rockchip,pins = <RK_GPIO3 27 RK_FUNC_1 &pcfg_pull_none>;
+				};
+			};
+
+			pwm1 {
+				pwm1_pins: pwm1-pins {
+					rockchip,pins = <RK_GPIO3 28 RK_FUNC_1 &pcfg_pull_none>;
+				};
+			};
+
+			pwm2 {
+				pwm2_pins: pwm2-pins {
+					rockchip,pins = <RK_GPIO3 29 RK_FUNC_1 &pcfg_pull_none>;
+				};
+			};
+
+			pwm3 {
+				pwm3_pins: pwm3-pins {
+					rockchip,pins = <RK_GPIO3 30 RK_FUNC_1 &pcfg_pull_none>;
 				};
 			};
 		};

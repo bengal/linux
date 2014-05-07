@@ -141,5 +141,37 @@
 
 			status = "disabled";
 		};
+
+		pwm0: pwm@20030000 {
+			compatible = "rockchip,rk2928-pwm";
+			reg = <0x20030000 0x10>;
+			#pwm-cells = <2>;
+			clocks = <&clk_gates7 10>;
+			status = "disabled";
+		};
+
+		pwm1: pwm@20030010 {
+			compatible = "rockchip,rk2928-pwm";
+			reg = <0x20030010 0x10>;
+			#pwm-cells = <2>;
+			clocks = <&clk_gates7 10>;
+			status = "disabled";
+		};
+
+		pwm2: pwm@20050020 {
+			compatible = "rockchip,rk2928-pwm";
+			reg = <0x20050020 0x10>;
+			#pwm-cells = <2>;
+			clocks = <&clk_gates7 11>;
+			status = "disabled";
+		};
+
+		pwm3: pwm@20050030 {
+			compatible = "rockchip,rk2928-pwm";
+			reg = <0x20050030 0x10>;
+			#pwm-cells = <2>;
+			clocks = <&clk_gates7 11>;
+			status = "disabled";
+		};
 	};
 };
