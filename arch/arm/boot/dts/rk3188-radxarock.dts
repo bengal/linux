@@ -41,6 +41,18 @@
 		uart3: serial@20068000 {
 			status = "okay";
 		};
+ 
+                pwm1: pwm@20030010 {
+                        pinctrl-names = "default";
+                        pinctrl-0 = <&pwm1_pins>;
+                        status = "okay";
+                };
+
+                pwm2: pwm@20050020 {
+                        pinctrl-names = "default";
+                        pinctrl-0 = <&pwm2_pins>;
+                        status = "okay";
+                };
 
 		gpio-keys {
 			compatible = "gpio-keys";
