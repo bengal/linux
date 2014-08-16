@@ -1,0 +1,58 @@
+/*
+ * Amlogic Meson8 DTSI
+ *
+ * Copyright 2014 Carlo Caione <carlo@caione.org>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ */
+
+#include "meson.dtsi"
+
+/ {
+	model = "Amlogic Meson8 SoC";
+	compatible = "amlogic,m802";
+
+	interrupt-parent = <&gic>;
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu@200 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a9";
+			reg = <0x200>;
+		};
+
+		cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a9";
+			reg = <0x1>;
+		};
+
+		cpu@2 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a9";
+			reg = <0x2>;
+		};
+
+		cpu@3 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a9";
+			reg = <0x3>;
+	};
+	};
+
+	clocks {
+		#address-cells = <1>;
+
+		clk81: clk@0 {
+			#clock-cells = <0>;
+			compatible = "fixed-clock";
+			clock-frequency = <141666666>;
+		};
+	};
+};
