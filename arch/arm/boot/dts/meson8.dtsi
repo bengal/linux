@@ -43,7 +43,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a9";
 			reg = <0x3>;
-	};
+		};
 	};
 
 	clocks {
@@ -54,5 +54,15 @@
 			compatible = "fixed-clock";
 			clock-frequency = <141666666>;
 		};
+	};
+
+	ethmac: ethernet@c9410000 {
+		compatible = "snps,dwmac";
+		reg = <0xc9410000 0x10000>;
+		interrupts = <0 8 1>;
+		interrupt-names = "macirq";
+		clocks = <&clk81>;
+		clock-names = "stmmaceth";
+		status = "disabled";
 	};
 };
