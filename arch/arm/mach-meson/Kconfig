@@ -1,6 +1,8 @@
 menuconfig ARCH_MESON
 	bool "Amlogic Meson SoCs" if ARCH_MULTI_V7
 	select GENERIC_IRQ_CHIP
+	select HAVE_ARM_SCU if SMP
+	select CACHE_L2X0
 	select ARM_GIC
 
 if ARCH_MESON

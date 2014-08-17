@@ -64,6 +64,11 @@
 		interrupts = <0 10 1>;
 	};
 
+	scu@c4300000 {
+		compatible = "arm,cortex-a9-scu";
+		reg = <0xc4300000 0x1000>;
+	};
+
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <1>;
