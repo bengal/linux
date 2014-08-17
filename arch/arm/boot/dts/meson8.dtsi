@@ -56,6 +56,7 @@
 	cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
+		enable-method = "amlogic,meson8-smp";
 
 		cpu@200 {
 			device_type = "cpu";
@@ -80,6 +81,21 @@
 			compatible = "arm,cortex-a9";
 			reg = <0x203>;
 		};
+	};
+
+	sram@0d9000000 {
+		compatible = "meson,meson8-smp-sram";
+		reg = <0xd9000000 0x20000>;
+	};
+
+	hhi@c11040ec {
+		compatible = "meson,meson8-hhi";
+		reg = <0xc11040ec 0x2c0>;
+	};
+
+	pwr-a9-cntl@c81000e0 {
+		compatible = "meson,meson8-pwr-a9-cntl";
+		reg = <0xc81000e0 0x8>;
 	};
 
 	clk81: clk@0 {
