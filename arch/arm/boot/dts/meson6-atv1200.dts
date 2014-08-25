@@ -27,4 +27,23 @@
 
 &i2c_AO {
 	status = "okay";
+
+	pmic@32 {
+		compatible = "ricoh,rn5t618";
+		reg = <0x32>;
+
+		regulators {
+			DCDC1 {
+				regulator-min-microvolt = <1050000>;
+				regulator-max-microvolt = <1050000>;
+				regulator-always-on;
+			};
+
+			DCDC2 {
+				regulator-min-microvolt = <1175000>;
+				regulator-max-microvolt = <1175000>;
+				regulator-always-on;
+			};
+                };
+	};
 };
