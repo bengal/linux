@@ -70,6 +70,16 @@
 			clocks = <&clk81>;
 			status = "disabled";
 		};
+
+		i2c_AO: i2c@c8100500 {
+			compatible = "amlogic,meson6-i2c";
+			reg = <0xc8100500 0x20>;
+			interrupts = <0 92 1>;
+			clocks = <&clk81>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
 	};
 }; /* end of / */
 
