@@ -8,7 +8,9 @@
  */
 
 /dts-v1/;
-/include/ "meson6.dtsi"
+
+#include <dt-bindings/gpio/meson8-gpio.h>
+#include "meson6.dtsi"
 
 / {
 	model = "Geniatech ATV1200";
@@ -18,16 +20,31 @@
 		reg = <0x40000000 0x80000000>;
 	};
 
+	vcc_sd0: sdmmc-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "sdmmc-supply";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&gpio_ao GPIO_TEST_N 1>;
+		startup-delay-us = <100000>;
+		status = "disabled";
+	};
+
 	soc@c8100000 {
 		uart_AO: serial@c81004c0 {
 			status = "okay";
+			pinctrl-0 = <&uart_ao_a>;
+			pinctrl-names = "default";
 		};
 	};
 }; /* end of / */
 
 &i2c_AO {
 	status = "okay";
+	pinctrl-0 = <&i2c_mst_ao>;
+	pinctrl-names = "default";
 
+	/*
 	pmic@32 {
 		compatible = "ricoh,rn5t618";
 		reg = <0x32>;
@@ -46,4 +63,5 @@
 			};
                 };
 	};
+	*/
 };

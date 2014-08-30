@@ -197,6 +197,15 @@ config PINCTRL_FALCON
 	depends on SOC_FALCON
 	depends on PINCTRL_LANTIQ
 
+
+config PINCTRL_MESON
+	bool "Amlogic Meson pin controller driver"
+	depends on ARCH_MESON
+	select PINMUX
+	select PINCONF
+	select GENERIC_PINCONF
+	select OF_GPIO
+
 config PINCTRL_MXS
 	bool
 	select PINMUX
