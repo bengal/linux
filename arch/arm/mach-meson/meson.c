@@ -21,7 +21,15 @@ static const char * const m6_common_board_compat[] = {
 	NULL,
 };
 
+static const char * const m8_common_board_compat[] = {
+	"amlogic,meson8",
+	NULL,
+};
+
 DT_MACHINE_START(AML8726_MX, "Amlogic Meson6 platform")
 	.dt_compat	= m6_common_board_compat,
 MACHINE_END
 
+DT_MACHINE_START(MESON8, "Amlogic Meson8 platform")
+	.dt_compat	= m8_common_board_compat,
+MACHINE_END
