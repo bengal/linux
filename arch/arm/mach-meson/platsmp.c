@@ -22,19 +22,20 @@
 #include <linux/delay.h>
 #include <asm/smp_scu.h>
 #include <asm/smp_plat.h>
+#include <asm/cacheflush.h>
+
+extern char meson_secondary_trampoline;
+extern char meson_secondary_trampoline_jump;
+
+void meson_secondary_startup(void);
 
 static void __iomem *scu_base_addr;
-static void __iomem *sram_base_addr;
 static void __iomem *hhi_base_addr;
 static void __iomem *pwr_a9_cntl_addr;
 
 #define HHI_CPU_CLK_CNTL	0xb0
 #define PWR_A9_CNTL0		0x00
 #define PWR_A9_CNTL1		0x04
-#define SRAM_CPU_CONTROL	0x1ff80
-#define SRAM_CPU_CONTROL_ADDR	0x1ff84
-
-void meson_secondary_startup(void);
 
 static void set_reg_mask(void __iomem *addr, int val, int start, int len)
 {
@@ -72,10 +73,6 @@ static void __init meson8_smp_prepare_cpus(unsigned int max_cpus)
 	if (!scu_base_addr)
 		return;
 
-	sram_base_addr = find_and_map("meson,meson8-smp-sram");
-	if (!sram_base_addr)
-		return;
-
 	hhi_base_addr = find_and_map("meson,meson8-hhi");
 	if (!hhi_base_addr)
 		return;
@@ -89,8 +86,23 @@ static void __init meson8_smp_prepare_cpus(unsigned int max_cpus)
 
 static int meson8_smp_boot_secondary(unsigned int cpu, struct task_struct *idle)
 {
-	/* Power on the CPU in the SCU */
-	set_reg_mask(scu_base_addr + 8, 0, cpu << 3, 2);
+	u8 __iomem *zero;
+	u32 trampoline_size;
+
+	zero = (__force u8 __iomem *)PAGE_OFFSET;
+	trampoline_size = &meson_secondary_trampoline_jump -
+			  &meson_secondary_trampoline;
+
+	memcpy((void *)PAGE_OFFSET, &meson_secondary_trampoline,
+	       trampoline_size);
+	writel(virt_to_phys(meson_secondary_startup), zero + trampoline_size);
+
+	flush_cache_all();
+	outer_flush_range(0, trampoline_size + 4);
+	smp_wmb();
+
+	/* Activate normal mode in SCU */
+	set_reg_mask(scu_base_addr + 8, SCU_PM_NORMAL, cpu << 3, 2);
 	/* Enable reset */
 	set_reg_mask(hhi_base_addr + HHI_CPU_CLK_CNTL, 1, cpu + 24, 1);
 	/* Power on CPU */
@@ -102,12 +114,6 @@ static int meson8_smp_boot_secondary(unsigned int cpu, struct task_struct *idle)
 	set_reg_mask(pwr_a9_cntl_addr + PWR_A9_CNTL0, 0, cpu, 1);
 	/* Disable reset */
 	set_reg_mask(hhi_base_addr + HHI_CPU_CLK_CNTL, 0, cpu + 24, 1);
-
-	/* Write entry point into SRAM */
-	writel((const uint32_t)virt_to_phys(meson_secondary_startup),
-	       sram_base_addr + SRAM_CPU_CONTROL_ADDR + ((cpu - 1) << 2));
-	set_reg_mask(sram_base_addr + SRAM_CPU_CONTROL, 1, cpu, 1);
-	set_reg_mask(sram_base_addr + SRAM_CPU_CONTROL, 1, 0, 1);
 
 	return 0;
 }
