@@ -177,7 +177,6 @@ struct meson_pinctrl {
 	{								\
 		.name = #_name,						\
 		.pins = (const unsigned int[]) { _pins, PINS_END },	\
-		.num_pins = 0,						\
 		.is_gpio = false,					\
 		.reg = _reg,						\
 		.bit = _bit,						\
@@ -187,7 +186,6 @@ struct meson_pinctrl {
 	{								\
 		.name = #_gpio,						\
 		.pins = (const unsigned int[]){ _gpio, PINS_END },	\
-		.num_pins = 0,						\
 		.is_gpio = true,					\
 	}
 
