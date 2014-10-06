@@ -477,7 +477,7 @@ struct meson_bank meson8_banks[] = {
 };
 
 struct meson_bank meson8_ao_banks[] = {
-	/*   name    first     last        pullen  pull     dir     out     in  */
+	/*   name    first     last         pullen  pull     dir     out     in  */
 	BANK("AO",   GPIOAO_0, GPIO_TEST_N, 0,  0,  0, 16,  0,  0,  0, 16,  1,  0),
 };
 

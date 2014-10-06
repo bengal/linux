@@ -11,8 +11,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define DEBUG
-
 #include <linux/device.h>
 #include <linux/gpio.h>
 #include <linux/init.h>
@@ -550,7 +548,7 @@ static struct meson_domain_data *get_domain_data(struct device_node *node,
 	return NULL;
 }
 
-static int meson_pinctrl_setup_pins(struct meson_pinctrl *pc)
+static int meson_pinctrl_prepare_data(struct meson_pinctrl *pc)
 {
 	struct meson_domain_data *data;
 	int i, j, pin = 0, func = 0, group = 0;
@@ -652,8 +650,8 @@ static int meson_pinctrl_parse_dt(struct meson_pinctrl *pc,
 	}
 
 	pc->domains = devm_kzalloc(pc->dev, pc->num_domains *
-				       sizeof(struct meson_domain),
-				       GFP_KERNEL);
+				   sizeof(struct meson_domain),
+				   GFP_KERNEL);
 	if (!pc->domains)
 		return -ENOMEM;
 
@@ -664,29 +662,29 @@ static int meson_pinctrl_parse_dt(struct meson_pinctrl *pc,
 
 		domain = &pc->domains[i];
 		domain->reg_mux = meson_map_resource(pc, np, "mux",
-						   &domain->mux_size);
+						     &domain->mux_size);
 		if (!domain->reg_mux) {
 			dev_err(pc->dev, "mux registers not found\n");
 			return -ENODEV;
 		}
 
 		domain->reg_pull = meson_map_resource(pc, np, "pull",
-						     &domain->pull_size);
+						      &domain->pull_size);
 		if (!domain->reg_pull) {
 			dev_err(pc->dev, "pull registers not found\n");
 			return -ENODEV;
 		}
 
 		domain->reg_pullen = meson_map_resource(pc, np, "pull-enable",
-						       &domain->pullen_size);
+							&domain->pullen_size);
 		if (!domain->reg_pullen) {
-			/* Use pull region if pull-enable is not present */
+			/* Use pull region if pull-enable one is not present */
 			domain->reg_pullen = domain->reg_pull;
 			domain->pullen_size = domain->pull_size;
 		}
 
 		domain->reg_gpio = meson_map_resource(pc, np, "gpio",
-						     &domain->gpio_size);
+						      &domain->gpio_size);
 		if (!domain->reg_gpio) {
 			dev_err(pc->dev, "gpio registers not found\n");
 			return -ENODEV;
@@ -704,7 +702,7 @@ static int meson_pinctrl_parse_dt(struct meson_pinctrl *pc,
 		i++;
 	}
 
-	meson_pinctrl_setup_pins(pc);
+	meson_pinctrl_prepare_data(pc);
 
 	return 0;
 }
