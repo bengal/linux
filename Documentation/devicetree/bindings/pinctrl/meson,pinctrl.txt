@@ -1,0 +1,81 @@
+Amlogic Meson pinmux controller
+
+Pins are organized in banks; all banks except AO are controlled by the
+same set of registers, while the AO bank uses a dedicated register
+range.
+
+The device tree uses sub-nodes to represent set of registers with the
+same address space (which are called "domains" in the driver).
+
+Required properties for the root node:
+ - compatible: "amlogic,meson8-pinctrl"
+ - reg: address and size of registers controlling irq functionality
+
+Required properties for gpio sub-nodes:
+ - reg: should contain address and size for mux, pull-enable, pull and
+   gpio register sets
+ - reg-names: an array of strings describing the "reg" entries. Must
+   contain "mux", "pull" and "gpio". "pull-enable" is optional and
+   when it is missing the "pull" registers are used instead
+ - gpio-controller: identifies the node as a gpio controller
+ - #gpio-cells: must be 2
+
+Valid gpio sub-nodes name are:
+ - "banks" for the standard banks
+ - "ao-bank" for the AO bank which belong to the special always-on
+   power domain
+
+Required properties for configuration nodes:
+ - pins: the name of a pin group. The list of all available groups is
+   available in driver sources.
+ - function: the name of a function to activate for the specified set
+   of groups. The list of all available functions can be found in
+   driver sources.
+
+Example:
+
+	pinctrl: pinctrl@c1109880 {
+		compatible = "amlogic,meson8-pinctrl";
+		reg = <0xc1109880 0x10>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		gpio: banks@c11080b0 {
+			reg = <0xc11080b0 0x28>,
+			      <0xc11080e4 0x18>,
+			      <0xc1108120 0x18>,
+			      <0xc1108030 0x30>;
+			reg-names = "mux", "pull-enable", "pull", "gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+               };
+
+		gpio_ao: ao-bank@c1108030 {
+			reg = <0xc8100014 0x4>,
+			      <0xc810002c 0x4>,
+			      <0xc8100024 0x8>;
+			reg-names = "mux", "pull", "gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		nand {
+			nand {
+				pins = "nand_io", "nand_io_ce0", "nand_io_ce1",
+				       "nand_io_rb0", "nand_ale", "nand_cle",
+				       "nand_wen_clk", "nand_ren_clk", "nand_dqs",
+				       "nand_ce2", "nand_ce3";
+				function = "nand";
+			};
+		};
+
+		uart_ao_a: uart_ao_a {
+			uart_ao_a {
+				pins = "uart_tx_ao_a", "uart_rx_ao_a";
+				       "uart_cts_ao_a", "uart_rts_ao_a";
+				function = "uart_ao";
+			};
+		};
+	};
+
