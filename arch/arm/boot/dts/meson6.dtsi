@@ -73,6 +73,41 @@
 	clk81: clk@0 {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
-		clock-frequency = <200000000>;
+		clock-frequency = <141666666>;
 	};
+
+	pinctrl: pinctrl@c1109880 {
+		compatible = "amlogic,meson8-pinctrl";
+		reg = <0xc1109880 0x10>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		gpio: banks@c11080b0 {
+			reg = <0xc11080b0 0x28>,
+			      <0xc11080e4 0x18>,
+			      <0xc1108120 0x18>,
+			      <0xc1108030 0x30>;
+			reg-names = "mux", "pull-enable", "pull", "gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+               };
+
+		gpio_ao: ao-bank@c1108030 {
+			reg = <0xc8100014 0x4>,
+			      <0xc810002c 0x4>,
+			      <0xc8100024 0x8>;
+			reg-names = "mux", "pull", "gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		ir_pins: ir_pins {
+			ir_pins {
+				pins = "remote_input";
+				function = "remote";
+			};
+		};
+	};
+
 }; /* end of / */
