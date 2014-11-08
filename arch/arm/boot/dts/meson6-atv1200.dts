@@ -64,3 +64,9 @@
 &uart_AO {
 	status = "okay";
 };
+
+&ir_receiver {
+	status = "okay";
+	pinctrl-0 = <&ir_pins>;
+	pinctrl-names = "default";
+};
