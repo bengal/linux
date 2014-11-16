@@ -132,6 +132,13 @@
 				function = "remote";
 			};
 		};
+
+		i2c_ao_pins: i2c_ao {
+			mux {
+				groups = "i2c_mst_sda_ao", "i2c_mst_sck_ao";
+				function = "i2c_mst_ao";
+			};
+		};
 	};
 
 }; /* end of / */

@@ -83,3 +83,23 @@
 	pinctrl-0 = <&remote_pins>;
 	pinctrl-names = "default";
 };
+
+&i2c_AO {
+	status = "okay";
+	pinctrl-0 = <&i2c_ao_pins>;
+	pinctrl-names = "default";
+
+       pmic@32 {
+               compatible = "ricoh,rn5t618";
+               reg = <0x32>;
+
+               regulators {
+
+               };
+       };
+
+       rtc@51 {
+               compatible = "nxp,pcf8563";
+               reg = <0x51>;
+       };
+};

@@ -112,7 +112,7 @@
 			reg = <0xc8100480 0x20>;
 			interrupts = <0 15 1>;
 			status = "disabled";
-		}
+		};
 
 		i2c_AO: i2c@c8100500 {
 			compatible = "amlogic,meson6-i2c";
