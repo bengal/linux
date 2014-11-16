@@ -125,6 +125,13 @@
 				bias-disable;
 			};
 		};
+
+		remote_pins: remote {
+			mux {
+				groups = "remote_input";
+				function = "remote";
+			};
+		};
 	};
 
 }; /* end of / */
