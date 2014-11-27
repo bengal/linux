@@ -131,3 +131,8 @@ config KEYSTONE_IRQ
 	help
 		Support for Texas Instruments Keystone 2 IRQ controller IP which
 		is part of the Keystone 2 IPC mechanism
+
+config MESON_IRQ
+	bool "Meson GPIO IRQ controller"
+	depends on ARCH_MESON
+	select IRQ_DOMAIN

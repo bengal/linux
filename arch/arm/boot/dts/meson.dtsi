@@ -58,6 +58,22 @@
 		#interrupt-cells = <3>;
 	};
 
+	gpioirq: interrupt-controller@c1109880 {
+		compatible = "amlogic,meson-irq";
+		reg = <0xc1109880 0x10>;
+		interrupt-parent = <&gic>;
+		interrupts = <0 64 1>, <0 65 1>, <0 66 1>, <0 67 1>,
+			     <0 68 1>, <0 69 1>, <0 70 1>, <0 71 1>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+	};
+
+	test: test@0 {
+		compatible = "ben,test-irq";
+		interrupt-parent = <&gpioirq>;
+		interrupts = <3 1>;
+	};
+
 	timer@c1109940 {
 		compatible = "amlogic,meson6-timer";
 		reg = <0xc1109940 0x14>;
