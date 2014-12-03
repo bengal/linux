@@ -153,6 +153,11 @@ struct meson_pinctrl {
 	struct pinctrl_desc desc;
 	struct meson_pinctrl_data *data;
 	struct meson_domain *domains;
+
+	struct regmap *reg_irq;
+	struct of_phandle_args *gic_irqs;
+	int num_gic_irqs;
+	unsigned long gic_irq_map;
 };
 
 #define GROUP(grp, r, b)						\

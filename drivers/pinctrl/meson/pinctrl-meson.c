@@ -48,8 +48,11 @@
 #include <linux/gpio.h>
 #include <linux/init.h>
 #include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
 #include <linux/module.h>
 #include <linux/of.h>
+#include <linux/of_irq.h>
 #include <linux/of_address.h>
 #include <linux/pinctrl/pinconf-generic.h>
 #include <linux/pinctrl/pinconf.h>
@@ -62,6 +65,17 @@
 #include "../core.h"
 #include "../pinctrl-utils.h"
 #include "pinctrl-meson.h"
+
+#define REG_EDGE_POL	0x00
+#define REG_GPIO_SEL0	0x04
+#define REG_GPIO_SEL1	0x08
+#define REG_FILTER	0x0c
+
+#define REG_EDGE_POL_MASK(x)	(BIT(x) | BIT(16 + (x)))
+#define REG_EDGE_POL_LEVEL(x)	0
+#define REG_EDGE_POL_EDGE(x)	BIT(x)
+#define REG_EDGE_POL_HIGH(x)	0
+#define REG_EDGE_POL_LOW(x)	BIT(16 + (x))
 
 /**
  * meson_get_bank() - find the bank containing a given pin
@@ -705,6 +719,165 @@ static int meson_pinctrl_parse_dt(struct meson_pinctrl *pc,
 	return 0;
 }
 
+static int meson_irq_set_type(struct irq_data *data, unsigned int type)
+{
+	pr_debug("%s\n", __func__);
+
+	if (type == IRQ_TYPE_LEVEL_LOW)
+		type = IRQ_TYPE_LEVEL_HIGH;
+	else if (type == IRQ_TYPE_EDGE_FALLING)
+		type = IRQ_TYPE_EDGE_RISING;
+
+	data->parent_data->chip->irq_set_type(data, type);
+
+	return 0;
+}
+
+static struct irq_chip meson_irq_chip = {
+	.name			= "meson-gpio-irqchip",
+	.irq_mask		= irq_chip_mask_parent,
+	.irq_unmask		= irq_chip_unmask_parent,
+	.irq_eoi		= irq_chip_eoi_parent,
+	.irq_set_type		= meson_irq_set_type,
+	.irq_retrigger		= irq_chip_retrigger_hierarchy,
+	.irq_set_affinity	= irq_chip_set_affinity_parent,
+};
+
+static int meson_map_free_gic_irq(struct irq_domain *domain,
+				  irq_hw_number_t hwirq)
+{
+	struct meson_pinctrl *pc = domain->host_data;
+	int index, reg;
+
+	index = find_first_bit(&pc->gic_irq_map, BITS_PER_LONG);
+	if (index == BITS_PER_LONG) {
+		pr_err("no GIC interrupt found");
+		return -ENOSPC;
+	}
+
+	dev_dbg(pc->dev, "found free GIC interrupt %d\n", index);
+	clear_bit(index, &pc->gic_irq_map);
+
+	/* Setup pin */
+	reg = index < 4 ? REG_GPIO_SEL0 : REG_GPIO_SEL1;
+	regmap_update_bits(pc->reg_irq, reg, 0xff << (index % 4) * 8,
+			   hwirq << (index % 4) * 8);
+
+	/* Set default trigger type */
+	regmap_update_bits(pc->reg_irq, REG_EDGE_POL, REG_EDGE_POL_MASK(index),
+			   REG_EDGE_POL_EDGE(index) | REG_EDGE_POL_LOW(index));
+
+	/* Set filter */
+	regmap_update_bits(pc->reg_irq, REG_FILTER, 0xf << index * 4,
+			   7 << index * 4);
+
+	return index;
+}
+
+static int meson_irq_domain_xlate(struct irq_domain *d,
+				  struct device_node *controller,
+				  const u32 *intspec, unsigned int intsize,
+				  unsigned long *out_hwirq,
+				  unsigned int *out_type)
+{
+	if (intsize != 2)
+		return -EINVAL;
+
+	*out_hwirq = intspec[0];
+	*out_type = intspec[1] & IRQ_TYPE_SENSE_MASK;
+
+	return 0;
+}
+
+static int meson_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
+				  unsigned int nr_irqs, void *arg)
+{
+	struct meson_pinctrl *pc = domain->host_data;
+	struct of_phandle_args *irq_data = arg;
+	struct of_phandle_args gic_data;
+	irq_hw_number_t hwirq;
+	int index, ret, i;
+
+	if (irq_data->args_count != 2)
+		return -EINVAL;
+
+	hwirq = irq_data->args[0];
+	dev_dbg(pc->dev, "%s virq %d, nr %d, hwirq %lu\n",
+		__func__, virq, nr_irqs, hwirq);
+
+	for (i = 0; i < nr_irqs; i++) {
+		index = meson_map_free_gic_irq(domain, hwirq);
+		if (index < 0)
+			return index;
+
+		irq_domain_set_hwirq_and_chip(domain, virq + i,
+					      hwirq + i,
+					      &meson_irq_chip,
+					      domain->host_data);
+
+		irq_set_handler(virq + i, handle_edge_irq);
+
+		gic_data = pc->gic_irqs[index];
+		ret = irq_domain_alloc_irqs_parent(domain, virq, nr_irqs,
+						   &gic_data);
+	}
+
+	return 0;
+}
+
+static struct irq_domain_ops meson_irq_domain_ops = {
+	.alloc		= meson_irq_domain_alloc,
+	.free		= irq_domain_free_irqs_common,
+	.xlate		= meson_irq_domain_xlate,
+};
+
+static int meson_gpio_irq_init(struct platform_device *pdev,
+			       struct meson_pinctrl *pc)
+{
+	struct irq_domain *domain, *parent_domain;
+	struct device_node *node, *parent_node;
+	int i;
+
+	node = pc->dev->of_node;
+	parent_node = of_irq_find_parent(node);
+	if (!parent_node) {
+		dev_err(pc->dev, "can't find parent interrupt controller\n");
+		return -EINVAL;
+	}
+
+	parent_domain = irq_find_host(parent_node);
+	if (!parent_domain) {
+		dev_err(pc->dev, "can't find parent IRQ domain\n");
+		return -EINVAL;
+	}
+
+	pc->reg_irq = meson_map_resource(pc, node, "irq");
+	if (!pc->reg_irq) {
+		dev_err(pc->dev, "can't find irq registers\n");
+		return -EINVAL;
+	}
+
+	pc->num_gic_irqs = of_irq_count(node);
+	if (!pc->num_gic_irqs) {
+		dev_err(pc->dev, "no parent interrupt specified\n");
+		return -EINVAL;
+	}
+
+	pc->gic_irqs = devm_kzalloc(pc->dev, sizeof(struct of_phandle_args) *
+				    pc->num_gic_irqs, GFP_KERNEL);
+	if (!pc->gic_irqs)
+		return -ENOMEM;
+
+	for (i = 0; i < pc->num_gic_irqs; i++)
+		of_irq_parse_one(node, i, &pc->gic_irqs[i]);
+
+	pc->gic_irq_map = BIT(pc->num_gic_irqs) - 1;
+	domain = irq_domain_add_hierarchy(parent_domain, 0, pc->data->num_pins,
+					  node, &meson_irq_domain_ops, pc);
+
+	return 0;
+}
+
 static int meson_pinctrl_probe(struct platform_device *pdev)
 {
 	const struct of_device_id *match;
@@ -741,6 +914,12 @@ static int meson_pinctrl_probe(struct platform_device *pdev)
 	ret = meson_gpiolib_register(pc);
 	if (ret) {
 		pinctrl_unregister(pc->pcdev);
+		return ret;
+	}
+
+	ret = meson_gpio_irq_init(pdev, pc);
+	if (ret) {
+		dev_err(pc->dev, "can't setup gpio interrupts\n");
 		return ret;
 	}
 
