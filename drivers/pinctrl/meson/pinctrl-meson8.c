@@ -1043,19 +1043,20 @@ struct meson_pmx_func meson8_functions[] = {
 };
 
 struct meson_bank meson8_banks[] = {
-	/*   name    first         last             pullen  pull     dir     out     in  */
-	BANK("X",    PIN_GPIOX_0,  PIN_GPIOX_21,    4,  0,  4,  0,  0,  0,  1,  0,  2,  0),
-	BANK("Y",    PIN_GPIOY_0,  PIN_GPIOY_16,    3,  0,  3,  0,  3,  0,  4,  0,  5,  0),
-	BANK("DV",   PIN_GPIODV_0, PIN_GPIODV_29,   0,  0,  0,  0,  7,  0,  8,  0,  9,  0),
-	BANK("H",    PIN_GPIOH_0,  PIN_GPIOH_9,     1, 16,  1, 16,  9, 19, 10, 19, 11, 19),
-	BANK("Z",    PIN_GPIOZ_0,  PIN_GPIOZ_14,    1,  0,  1,  0,  3, 17,  4, 17,  5, 17),
-	BANK("CARD", PIN_CARD_0,   PIN_CARD_6,      2, 20,  2, 20,  0, 22,  1, 22,  2, 22),
-	BANK("BOOT", PIN_BOOT_0,   PIN_BOOT_18,     2,  0,  2,  0,  9,  0, 10,  0, 11,  0),
+	/*   name    first        last         pullen  pull     dir     out     in    irq */
+	BANK("X",    GPIOX_0,     GPIOX_21,    4,  0,  4,  0,  0,  0,  1,  0,  2,  0, 112),
+	BANK("Y",    GPIOY_0,     GPIOY_16,    3,  0,  3,  0,  3,  0,  4,  0,  5,  0,  95),
+	BANK("DV",   GPIODV_0,    GPIODV_29,   0,  0,  0,  0,  7,  0,  8,  0,  9,  0,  65),
+	BANK("H",    GPIOH_0,     GPIOH_9,     1, 16,  1, 16,  9, 19, 10, 19, 11, 19,  29),
+	BANK("Z",    GPIOZ_0,     GPIOZ_14,    1,  0,  1,  0,  3, 17,  4, 17,  5, 17,  14),
+	BANK("CARD", CARD_0,      CARD_6,      2, 20,  2, 20,  0, 22,  1, 22,  2, 22,  58),
+	BANK("BOOT", BOOT_0,      BOOT_18,     2,  0,  2,  0,  9,  0, 10,  0, 11,  0,  39),
 };
 
 struct meson_bank meson8_ao_banks[] = {
-	/*   name    first         last             pullen  pull     dir     out     in  */
-	BANK("AO",   PIN_GPIOAO_0, PIN_GPIO_TEST_N, 0,  0,  0, 16,  0,  0,  0, 16,  1,  0),
+	/*   name    first         last        pullen  pull     dir     out     in    irq */
+	BANK("AO",   GPIOAO_0,    GPIOAO_13,   0,  0,  0, 16,  0,  0,  0, 16,  1,  0,   0),
+	BANK("TEST", GPIO_BSD_EN, GPIO_TEST_N, 0, 14,  0, 30,  0, 14,  0, 30,  1, 14, 134),
 };
 
 struct meson_domain_data meson8_domain_data[] = {

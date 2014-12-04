@@ -553,6 +553,24 @@ static int meson_gpio_get(struct gpio_chip *chip, unsigned gpio)
 	return !!(val & BIT(bit));
 }
 
+static int meson_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
+{
+	struct meson_domain *domain = to_meson_domain(chip);
+	struct meson_pinctrl *pc = domain->pinctrl;
+	struct meson_bank *bank;
+	unsigned int pin, virq;
+	int ret;
+
+	pin = domain->data->pin_base + offset;
+	ret = meson_get_bank(domain, pin, &bank);
+	if (ret)
+		return -ENXIO;
+
+	virq = irq_create_mapping(pc->irq_domain, pin);
+
+	return virq ? virq : -ENXIO;
+}
+
 static const struct of_device_id meson_pinctrl_dt_match[] = {
 	{
 		.compatible = "amlogic,meson8-pinctrl",
@@ -578,6 +596,7 @@ static int meson_gpiolib_register(struct meson_pinctrl *pc)
 		domain->chip.direction_output = meson_gpio_direction_output;
 		domain->chip.get = meson_gpio_get;
 		domain->chip.set = meson_gpio_set;
+		domain->chip.to_irq = meson_gpio_to_irq;
 		domain->chip.base = -1;
 		domain->chip.ngpio = domain->data->num_pins;
 		domain->chip.can_sleep = false;
@@ -689,6 +708,7 @@ static int meson_pinctrl_parse_dt(struct meson_pinctrl *pc,
 		}
 
 		domain->of_node = np;
+		domain->pinctrl = pc;
 
 		domain->reg_mux = meson_map_resource(pc, np, "mux");
 		if (IS_ERR(domain->reg_mux)) {
@@ -743,11 +763,17 @@ static struct irq_chip meson_irq_chip = {
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
 };
 
-static int meson_map_free_gic_irq(struct irq_domain *domain,
+static int meson_map_free_gic_irq(struct irq_domain *irq_domain,
 				  irq_hw_number_t hwirq)
 {
-	struct meson_pinctrl *pc = domain->host_data;
-	int index, reg;
+	struct meson_pinctrl *pc = irq_domain->host_data;
+	struct meson_domain *domain;
+	struct meson_bank *bank;
+	int index, reg, ret;
+
+	ret = meson_get_domain_and_bank(pc, hwirq, &domain, &bank);
+	if (ret)
+		return ret;
 
 	index = find_first_bit(&pc->gic_irq_map, BITS_PER_LONG);
 	if (index == BITS_PER_LONG) {
@@ -761,7 +787,7 @@ static int meson_map_free_gic_irq(struct irq_domain *domain,
 	/* Setup pin */
 	reg = index < 4 ? REG_GPIO_SEL0 : REG_GPIO_SEL1;
 	regmap_update_bits(pc->reg_irq, reg, 0xff << (index % 4) * 8,
-			   hwirq << (index % 4) * 8);
+			   (bank->irq + hwirq - bank->first) << (index % 4) * 8);
 
 	/* Set default trigger type */
 	regmap_update_bits(pc->reg_irq, REG_EDGE_POL, REG_EDGE_POL_MASK(index),
@@ -834,8 +860,8 @@ static struct irq_domain_ops meson_irq_domain_ops = {
 static int meson_gpio_irq_init(struct platform_device *pdev,
 			       struct meson_pinctrl *pc)
 {
-	struct irq_domain *domain, *parent_domain;
 	struct device_node *node, *parent_node;
+	struct irq_domain *parent_domain;
 	int i;
 
 	node = pc->dev->of_node;
@@ -872,8 +898,13 @@ static int meson_gpio_irq_init(struct platform_device *pdev,
 		of_irq_parse_one(node, i, &pc->gic_irqs[i]);
 
 	pc->gic_irq_map = BIT(pc->num_gic_irqs) - 1;
-	domain = irq_domain_add_hierarchy(parent_domain, 0, pc->data->num_pins,
-					  node, &meson_irq_domain_ops, pc);
+	pc->irq_domain = irq_domain_add_hierarchy(parent_domain, 0,
+						  pc->data->num_pins,
+						  node, &meson_irq_domain_ops,
+						  pc);
+
+	if (!pc->irq_domain)
+		return -EINVAL;
 
 	return 0;
 }

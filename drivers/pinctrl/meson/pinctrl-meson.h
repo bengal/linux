@@ -16,6 +16,8 @@
 #include <linux/regmap.h>
 #include <linux/types.h>
 
+struct meson_pinctrl;
+
 /**
  * struct meson_pmx_group - a pinmux group
  *
@@ -82,6 +84,7 @@ enum meson_reg_type {
  * @name:	bank name
  * @first:	first pin of the bank
  * @last:	last pin of the bank
+ * @irq:	the interrupt associated to first pin of the bank
  * @regs:	array of register descriptors
  *
  * A bank represents a set of pins controlled by a contiguous set of
@@ -93,6 +96,7 @@ struct meson_bank {
 	const char *name;
 	unsigned int first;
 	unsigned int last;
+	unsigned int irq;
 	struct meson_reg_desc regs[NUM_REG];
 };
 
@@ -134,6 +138,7 @@ struct meson_domain {
 	struct gpio_chip chip;
 	struct meson_domain_data *data;
 	struct device_node *of_node;
+	struct meson_pinctrl *pinctrl;
 };
 
 struct meson_pinctrl_data {
@@ -154,10 +159,12 @@ struct meson_pinctrl {
 	struct meson_pinctrl_data *data;
 	struct meson_domain *domains;
 
-	struct regmap *reg_irq;
 	struct of_phandle_args *gic_irqs;
-	int num_gic_irqs;
+	struct irq_domain *irq_domain;
 	unsigned long gic_irq_map;
+	unsigned int num_gic_irqs;
+	struct regmap *reg_irq;
+
 };
 
 #define GROUP(grp, r, b)						\
@@ -195,11 +202,12 @@ struct meson_pinctrl {
 		.num_groups = ARRAY_SIZE(fn ## _groups),		\
 	}
 
-#define BANK(n, f, l, per, peb, pr, pb, dr, db, or, ob, ir, ib)		\
+#define BANK(n, f, l, per, peb, pr, pb, dr, db, or, ob, ir, ib, i)	\
 	{								\
 		.name	= n,						\
-		.first	= f,						\
-		.last	= l,						\
+		.first	= PIN_ ## f,					\
+		.last	= PIN_ ## l,					\
+		.irq	= i,						\
 		.regs	= {						\
 			[REG_PULLEN]	= { per, peb },			\
 			[REG_PULL]	= { pr, pb },			\
