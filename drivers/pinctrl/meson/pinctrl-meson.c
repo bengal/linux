@@ -44,6 +44,8 @@
  * supported at the moment by the driver.
  */
 
+#define DEBUG
+
 #include <linux/device.h>
 #include <linux/gpio.h>
 #include <linux/init.h>

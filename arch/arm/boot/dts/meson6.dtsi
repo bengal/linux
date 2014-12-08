@@ -73,6 +73,71 @@
 	clk81: clk@0 {
 		#clock-cells = <0>;
 		compatible = "fixed-clock";
-		clock-frequency = <200000000>;
+		clock-frequency = <141666666>;
 	};
+
+	pinctrl: pinctrl@c1109880 {
+		compatible = "amlogic,meson8-pinctrl";
+		reg = <0xc1109880 0x10>;
+		reg-names = "irq";
+		interrupt-parent = <&gic>;
+                interrupts = <0 64 1>, <0 65 1>, <0 66 1>, <0 67 1>,
+			     <0 68 1>, <0 69 1>, <0 70 1>, <0 71 1>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		gpio: banks@c11080b0 {
+			reg = <0xc11080b0 0x28>,
+			      <0xc11080e8 0x18>,
+			      <0xc1108120 0x18>,
+			      <0xc1108030 0x30>;
+			reg-names = "mux", "pull", "pull-enable", "gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+               };
+
+		gpio_ao: ao-bank@c1108030 {
+			reg = <0xc8100014 0x4>,
+			      <0xc810002c 0x4>,
+			      <0xc8100024 0x8>;
+			reg-names = "mux", "pull", "gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		nand {
+			mux {
+				groups = "nand_io", "nand_io_ce0", "nand_io_ce1",
+					 "nand_io_rb0", "nand_ale", "nand_cle",
+					 "nand_wen_clk", "nand_ren_clk", "nand_dqs",
+					 "nand_ce2", "nand_ce3";
+				function = "nand";
+			};
+		};
+
+		uart_ao_a {
+			mux {
+				groups = "uart_tx_ao_a", "uart_rx_ao_a",
+					 "uart_cts_ao_a", "uart_rts_ao_a";
+				function = "uart_ao";
+			};
+
+			conf {
+				pins = "GPIOAO_0", "GPIOAO_1",
+				       "GPIOAO_2", "GPIOAO_3";
+				bias-disable;
+			};
+		};
+	};
+
+
+        test@0 {
+                compatible = "pwm-test-irq";
+                interrupt-parent = <&pinctrl>;
+                interrupts = <123 1>;
+        };
+
 }; /* end of / */
