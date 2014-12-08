@@ -161,10 +161,10 @@ struct meson_pinctrl {
 
 	struct of_phandle_args *gic_irqs;
 	struct irq_domain *irq_domain;
-	unsigned long gic_irq_map;
 	unsigned int num_gic_irqs;
+	unsigned int *irq_map;
 	struct regmap *reg_irq;
-
+	spinlock_t lock;
 };
 
 #define GROUP(grp, r, b)						\
