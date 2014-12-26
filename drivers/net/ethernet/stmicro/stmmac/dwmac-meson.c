@@ -51,6 +51,21 @@ static void *meson6_dwmac_setup(struct platform_device *pdev)
 	struct meson_dwmac *dwmac;
 	struct resource *res;
 
+#if 1
+	void __iomem *mpeg;
+	u32 val;
+
+	mpeg = ioremap(0xc1104140, 12);
+	if (!mpeg) {
+		printk("Cannot remap clk gate\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	val = readl(mpeg + 4);
+	val |= BIT(3);
+	writel(val, mpeg + 4);
+#endif
+
 	dwmac = devm_kzalloc(&pdev->dev, sizeof(*dwmac), GFP_KERNEL);
 	if (!dwmac)
 		return ERR_PTR(-ENOMEM);
